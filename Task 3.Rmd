@@ -1,0 +1,237 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+title: "Task 3"
+author: "Kush Ise"
+date: "19/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+
+library(tidyverse) 
+library(caret)
+library(grid)
+library(gridExtra)
+library(GGally)
+library(rpart)
+```
+
+
+```{r}
+data
+head(data)
+
+
+```
+Data exploration and vizualisation
+Distribution of target values
+First, let's see how the target values are distributed.
+
+```{r}
+iris %>%
+    group_by(Species) %>%
+    summarise(count = n()) %>%
+    ggplot(aes(x = Species, y = count, fill = Species)) + 
+        geom_bar(stat = "identity") +
+        geom_text(aes(label = as.character(count)), 
+                 position = position_dodge(width = 1),
+                 hjust = 0.5, vjust = -0.25, size = 3) +
+        theme(legend.position = "none") +
+        labs(title = "Species", x = "", caption = "Fig.1")
+```
+Distribution of predictors values
+
+```{r}
+h1 <- iris %>%
+    group_by(Species, Sepal.Length) %>%
+    ggplot(aes(x = Sepal.Length, fill = Species)) + 
+        geom_histogram(binwidth = 0.5) + # 
+        theme(legend.position = "none") +
+        labs(title = "Sepal.Length", x = "", y = "")
+
+h2 <- iris %>%
+    group_by(Species, Sepal.Width) %>%
+    ggplot(aes(x = Sepal.Width, fill = Species)) + 
+        geom_histogram(binwidth = 0.25) + # 
+        theme(legend.position = "none") +
+        labs(title = "Sepal.Width", x = "", y = "")
+
+h3 <- iris %>%
+    group_by(Species, Petal.Length) %>%
+    ggplot(aes(x = Petal.Length, fill = Species)) + 
+        geom_histogram(binwidth = 1) + # 
+        theme(legend.position = "none") +
+        labs(title = "Petal.Length", x = "", y = "")
+
+h4 <- iris %>%
+    group_by(Species, Petal.Width) %>%
+    ggplot(aes(x = Petal.Width, fill = Species)) + 
+        geom_histogram(binwidth = 0.5) + # 
+        theme(legend.position = "none") +
+        labs(title = "Petal.Width", x = "", y = "", caption = "Fig.2")
+
+grid.arrange(h1, h2, h3, h4,
+             ncol = 4)
+```
+```{r}
+b1 <- iris %>%
+    group_by(Species, Sepal.Length) %>%
+    ggplot(aes(x = Species, y = Sepal.Length)) + 
+        geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 2, notch = FALSE) +  
+        theme_minimal() +
+        theme(legend.position = "none",
+             axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0)) +
+        labs(title = "Sepal.Length", x = "", y = "")
+
+b2 <- iris %>%
+    group_by(Species, Sepal.Width) %>%
+    ggplot(aes(x = Species, y = Sepal.Width)) + 
+        geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 2, notch = FALSE) +  
+        theme_minimal() +
+        theme(legend.position = "none",
+             axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0)) +
+        labs(title = "Sepal.Width", x = "", y = "")
+
+b3 <- iris %>%
+    group_by(Species, Petal.Length) %>%
+    ggplot(aes(x = Species, y = Petal.Length)) + 
+        geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 2, notch = FALSE) +  
+        theme_minimal() +
+        theme(legend.position = "none",
+             axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0)) +
+        labs(title = "Petal.Length", x = "", y = "")
+
+b4 <- iris %>%
+    group_by(Species, Petal.Width) %>%
+    ggplot(aes(x = Species, y = Petal.Width)) + 
+        geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 2, notch = FALSE) +  
+        theme_minimal() +
+        theme(legend.position = "none",
+             axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0)) +
+        labs(title = "Petal.Width", x = "", y = "", caption = "Fig.3")
+
+grid.arrange(b1, b2, b3, b4,
+             ncol = 4)
+
+```
+
+
+```{r}
+f1 <- iris %>%
+    group_by(Species, Sepal.Length, Sepal.Width) %>%
+    ggplot(aes(Sepal.Length, Sepal.Width, color = Species)) + 
+        geom_point() +  
+        theme_minimal() +
+        theme(legend.position = "none") +
+        labs(title = "")
+
+f2 <- iris %>%
+    group_by(Species, Petal.Length, Petal.Width) %>%
+    ggplot(aes(Petal.Length, Petal.Width, color = Species)) + 
+        geom_point() +  
+        theme_minimal() +
+        theme(legend.position = "none") +
+        labs(title = "")
+
+f3 <- iris %>%
+    group_by(Species, Petal.Length, Sepal.Width) %>%
+    ggplot(aes(Petal.Length, Sepal.Width, color = Species)) + 
+        geom_point() +  
+        theme_minimal() +
+        theme(legend.position = "none") +
+        labs(title = "")
+
+f4 <- iris %>%
+    group_by(Species, Sepal.Length, Petal.Width) %>%
+    ggplot(aes(Sepal.Length, Petal.Width, color = Species)) + 
+        geom_point() +  
+        theme_minimal() +
+        theme(legend.position = "none") +
+        labs(title = "", caption = "Fig.4")
+
+grid.arrange(f1, f2, f3, f4, ncol = 2)
+```
+```{r}
+## convert all values to numeric (especially the target)
+all_num <- iris
+all_num$Species <- as.numeric(all_num$Species)
+all_num %>% ggcorr(palette = "RdBu", label = TRUE)
+```
+Classification using a simple decision tree
+Now that we made all those conclusions, let's see how we can determine the Species of an Iris flower using a very simple decision tree.
+
+Using the correlation plot and the top right plot in Fig. 4, we can deduce a set of simple rules. For example:
+
+If Petal.Length < 2.5, Species = setosa
+
+If Petal.Length >= 2.5,
+
+If Petal.Width < 1.8, Species = versicolor
+
+If Petal.Width >= 1.8, Species = virginica
+```{r}
+mytree <- rpart(Species ~ ., data = iris)
+rattle::fancyRpartPlot(mytree, type = 5, sub = "")
+```
+```{r}
+set.seed(3) # for reproducibility
+idx <- createDataPartition(factor(iris$Species), 
+                           times = 1, # one time
+                           p = 0.5, # 50% proportion
+                           list = FALSE)
+
+## train set
+trainset <- iris[idx,] 
+## validation set
+validation_set <- iris[-idx,] %>% select(-Species)   
+validation_labels <- iris[-idx,] %>% select(Species)
+```
+
+```{r}
+control <- trainControl(method = "cv", # cross-validation
+                        verboseIter = TRUE,
+                        savePredictions = "final",
+                        classProbs = TRUE) 
+
+set.seed(1)
+model <- train(Species ~ ., data = iris,
+               trControl = control,
+               maximize = TRUE,
+               tuneGrid = data.frame(mtry = 4),
+               method = "rf")
+```
+```{r}
+model
+```
+ACCURACY OF PREDICTION MODEL IS 95.33% which is not bad
+
+```{r}
+confusionMatrix.train(model)
+```
+```{r}
+val_preds <- predict(model, validation_set)
+confusionMatrix(val_preds, validation_labels$Species)
+```
+```{r}
+set.seed(3)
+n <- sample(1:nrow(validation_set), size = 3)
+validation_set[n,]
+```
+
+```{r}
+val_preds[n]
+```
+```{r}
+varImp(model)
+```
+
